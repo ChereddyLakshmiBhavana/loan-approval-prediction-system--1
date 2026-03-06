@@ -54,12 +54,27 @@ pip install -e .
 
 ## Usage
 
+### Testing Data Pipeline
+
+Before training, test the data loading and preprocessing pipeline:
+
+```bash
+python test_data_pipeline.py
+```
+
 ### Training the Model
 
-```python
-from src.models.train import train_model
+Train models using the integrated data pipeline:
 
-train_model(data_path='data/processed/', model_type='neural_network')
+```bash
+# Train neural network (default)
+python src/models/train.py
+
+# Train gradient boosting model
+python src/models/train.py --model gradient_boosting
+
+# Train with custom dataset
+python src/models/train.py --data path/to/your/dataset.csv
 ```
 
 ### Making Predictions (API)
@@ -89,9 +104,42 @@ npm start
 
 ## Dataset
 
-- Loan applicant features (income, employment, credit score, etc.)
-- Loan application details (amount, term, purpose)
-- Historical approval outcomes
+This project uses the **Loan Approval Prediction Dataset** from Kaggle (https://www.kaggle.com/datasets/architsharma01/loan-approval-prediction-dataset).
+
+### Dataset Features
+
+The dataset contains 13 columns with information about loan applicants:
+
+- **loan_id**: Unique identifier for each loan application
+- **no_of_dependents**: Number of dependents
+- **education**: Education level (Graduate/Not Graduate)
+- **self_employed**: Employment status (Yes/No)
+- **income_annum**: Annual income
+- **loan_amount**: Loan amount requested
+- **loan_term**: Loan term in months
+- **cibil_score**: Credit score
+- **residential_assets_value**: Value of residential assets
+- **commercial_assets_value**: Value of commercial assets
+- **luxury_assets_value**: Value of luxury assets
+- **bank_asset_value**: Value of bank assets
+- **loan_status**: Target variable (Approved/Rejected)
+
+### Data Pipeline
+
+The system includes a comprehensive data processing pipeline:
+
+1. **Data Loading**: Automated loading with column validation
+2. **Preprocessing**: Missing value handling, categorical encoding, feature scaling
+3. **Feature Engineering**: 
+   - Total assets calculation (sum of all asset values)
+   - Debt-to-income ratio calculation
+4. **Train/Validation/Test Split**: Stratified splitting to maintain class balance
+
+### Getting the Dataset
+
+1. Download `loan_approval_dataset.csv` from Kaggle
+2. Place the file in `data/raw/` directory
+3. Run the data pipeline test: `python test_data_pipeline.py`
 
 ## Model Performance Metrics
 

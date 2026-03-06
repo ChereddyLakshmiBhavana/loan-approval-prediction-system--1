@@ -40,22 +40,41 @@ VALIDATION_SPLIT = 0.2
 TEST_SPLIT = 0.2
 RANDOM_STATE = 42
 
-# Feature Configuration
+# Feature Configuration for Loan Approval Dataset
 NUMERICAL_FEATURES = [
-    'ApplicantIncome',
-    'CoapplicantIncome',
-    'LoanAmount',
-    'Loan_Amount_Term',
-    'Credit_History'
+    'no_of_dependents',
+    'income_annum',
+    'loan_amount',
+    'loan_term',
+    'cibil_score',
+    'residential_assets_value',
+    'commercial_assets_value',
+    'luxury_assets_value',
+    'bank_asset_value',
+    'total_assets_value',  # Engineered feature
+    'debt_to_income_ratio'  # Engineered feature
 ]
 
 CATEGORICAL_FEATURES = [
-    'Gender',
-    'Married',
-    'Education',
-    'Self_Employed',
-    'Property_Area'
+    'education',
+    'self_employed'
 ]
+
+# Target Configuration
+TARGET_COLUMN = 'loan_status'
+TARGET_CLASSES = ['Rejected', 'Approved']  # 0 = Rejected, 1 = Approved
+
+# Dataset Configuration
+DATASET_FILENAME = 'loan_approval_dataset.csv'
+EXPECTED_COLUMNS = [
+    'loan_id', 'no_of_dependents', 'education', 'self_employed',
+    'income_annum', 'loan_amount', 'loan_term', 'cibil_score',
+    'residential_assets_value', 'commercial_assets_value',
+    'luxury_assets_value', 'bank_asset_value', 'loan_status'
+]
+
+# Model Configuration
+INPUT_SHAPE = (None, len(NUMERICAL_FEATURES) + len(CATEGORICAL_FEATURES))  # Adjust based on encoded features
 
 # Preprocessing Configuration
 SCALING_METHOD = "standard"  # standard, minmax, robust
