@@ -13,6 +13,65 @@ from config.config import API_HOST, API_PORT, DEBUG_MODE
 app = Flask(__name__)
 CORS(app)
 
+@app.route('/', methods=['GET'])
+def home():
+    """Root endpoint with API documentation"""
+    return jsonify({
+        'service': 'Loan Approval Prediction System',
+        'version': '1.0.0',
+        'status': 'active',
+        'endpoints': {
+            'GET /': 'API documentation (this endpoint)',
+            'GET /health': 'Health check',
+            'POST /predict': 'Single loan prediction',
+            'POST /batch-predict': 'Batch loan predictions',
+            'GET /model-info': 'Model information'
+        },
+        'documentation': {
+            'predict_endpoint': {
+                'method': 'POST',
+                'url': '/predict',
+                'description': 'Predict loan approval status for a single applicant',
+                'request_body': {
+                    'no_of_dependents': 'integer',
+                    'education': 'string (Graduate/Not Graduate)',
+                    'self_employed': 'string (Yes/No)',
+                    'income_annum': 'float (annual income)',
+                    'loan_amount': 'float',
+                    'loan_term': 'integer (months)',
+                    'cibil_score': 'integer (credit score)',
+                    'residential_assets_value': 'float',
+                    'commercial_assets_value': 'float',
+                    'luxury_assets_value': 'float',
+                    'bank_asset_value': 'float'
+                },
+                'response': {
+                    'approval_status': 'Approved/Rejected',
+                    'approval_probability': 'float (0-1)',
+                    'confidence': 'High/Medium/Low',
+                    'loan_id': 'string'
+                }
+            }
+        },
+        'example': {
+            'url': 'http://localhost:5000/predict',
+            'method': 'POST',
+            'example_request': {
+                'no_of_dependents': 1,
+                'education': 'Graduate',
+                'self_employed': 'No',
+                'income_annum': 60000,
+                'loan_amount': 150000,
+                'loan_term': 360,
+                'cibil_score': 780,
+                'residential_assets_value': 400000,
+                'commercial_assets_value': 100000,
+                'luxury_assets_value': 50000,
+                'bank_asset_value': 100000
+            }
+        }
+    }), 200
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
