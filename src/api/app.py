@@ -15,8 +15,8 @@ CORS(app)
 
 @app.route('/', methods=['GET'])
 def home():
-    """Root endpoint with API documentation"""
-    return jsonify({
+    """Root endpoint with API documentation (JSON or HTML)"""
+    doc = {
         'service': 'Loan Approval Prediction System',
         'version': '1.0.0',
         'status': 'active',
@@ -70,7 +70,27 @@ def home():
                 'bank_asset_value': 100000
             }
         }
-    }), 200
+    }
+    # If browser requests HTML, return simple formatted page
+    accept = request.headers.get('Accept', '')
+    if 'text/html' in accept:
+        html = f"""
+        <html><head><title>Loan Approval Prediction API</title></head><body>
+        <h1>Loan Approval Prediction API</h1>
+        <p>Version: {doc['version']} &mdash; Status: {doc['status']}</p>
+        <h2>Endpoints</h2>
+        <ul>
+          <li>GET /health &ndash; Health check</li>
+          <li>POST /predict &ndash; Single loan prediction</li>
+          <li>POST /batch-predict &ndash; Batch loan predictions</li>
+          <li>GET /model-info &ndash; Model information</li>
+        </ul>
+        <h2>Example Request</h2>
+        <pre>{doc['example']}</pre>
+        </body></html>
+        """
+        return html, 200, {'Content-Type': 'text/html'}
+    return jsonify(doc), 200
 
 @app.route('/health', methods=['GET'])
 def health_check():
