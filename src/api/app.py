@@ -78,9 +78,11 @@ def home():
         example_json = json.dumps(doc['example']['example_request'], indent=2)
         html = f"""
         <!DOCTYPE html>
-        <html>
+        <html lang="en">
         <head>
-            <title>Loan Approval Prediction API</title>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>🎯 Loan Approval Prediction API</title>
             <style>
                 * {{ margin: 0; padding: 0; box-sizing: border-box; }}
                 body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }}
@@ -174,7 +176,7 @@ def home():
         </body>
         </html>
         """
-        return html, 200, {'Content-Type': 'text/html'}
+        return html, 200, {'Content-Type': 'text/html; charset=utf-8'}
     return jsonify(doc), 200
 
 @app.route('/health', methods=['GET'])
