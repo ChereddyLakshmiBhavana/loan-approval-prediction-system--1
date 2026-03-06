@@ -71,23 +71,108 @@ def home():
             }
         }
     }
-    # If browser requests HTML, return simple formatted page
+    # If browser requests HTML, return formatted page
     accept = request.headers.get('Accept', '')
     if 'text/html' in accept:
+        import json
+        example_json = json.dumps(doc['example']['example_request'], indent=2)
         html = f"""
-        <html><head><title>Loan Approval Prediction API</title></head><body>
-        <h1>Loan Approval Prediction API</h1>
-        <p>Version: {doc['version']} &mdash; Status: {doc['status']}</p>
-        <h2>Endpoints</h2>
-        <ul>
-          <li>GET /health &ndash; Health check</li>
-          <li>POST /predict &ndash; Single loan prediction</li>
-          <li>POST /batch-predict &ndash; Batch loan predictions</li>
-          <li>GET /model-info &ndash; Model information</li>
-        </ul>
-        <h2>Example Request</h2>
-        <pre>{doc['example']}</pre>
-        </body></html>
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Loan Approval Prediction API</title>
+            <style>
+                * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+                body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }}
+                .container {{ max-width: 1000px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); padding: 40px; }}
+                h1 {{ color: #667eea; margin-bottom: 10px; font-size: 2.5em; }}
+                .status {{ display: flex; gap: 20px; margin-bottom: 30px; font-size: 1.1em; }}
+                .status-item {{ display: flex; align-items: center; gap: 8px; }}
+                .status-badge {{ padding: 5px 12px; border-radius: 20px; font-size: 0.9em; font-weight: bold; }}
+                .status-active {{ background: #4caf50; color: white; }}
+                .version {{ color: #666; }}
+                h2 {{ color: #333; margin-top: 30px; margin-bottom: 15px; border-bottom: 2px solid #667eea; padding-bottom: 10px; }}
+                .endpoints {{ display: grid; gap: 12px; }}
+                .endpoint {{ background: #f5f5f5; padding: 15px; border-radius: 6px; border-left: 4px solid #667eea; }}
+                .endpoint-method {{ font-weight: bold; color: #667eea; }}
+                .endpoint-path {{ font-family: 'Courier New', monospace; background: #fff; padding: 2px 6px; margin: 0 5px; }}
+                .endpoint-desc {{ color: #666; margin-left: 10px; }}
+                .example-section {{ margin-top: 30px; }}
+                .example-title {{ font-size: 1.3em; color: #333; margin-bottom: 15px; }}
+                .example-label {{ font-weight: bold; color: #667eea; margin-bottom: 8px; }}
+                pre {{ background: #f5f5f5; padding: 15px; border-radius: 6px; overflow-x: auto; font-size: 0.9em; border: 1px solid #ddd; }}
+                .endpoint-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-top: 15px; }}
+                .endpoint-card {{ background: #f9f9f9; padding: 15px; border-radius: 6px; border: 1px solid #e0e0e0; }}
+                .method-badge {{ display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 0.85em; font-weight: bold; margin-right: 8px; margin-bottom: 8px; }}
+                .method-get {{ background: #4caf50; color: white; }}
+                .method-post {{ background: #2196f3; color: white; }}
+                .footer {{ margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; color: #999; font-size: 0.9em; text-align: center; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>🎯 Loan Approval Prediction API</h1>
+                <div class="status">
+                    <div class="status-item version">Version: <strong>{doc['version']}</strong></div>
+                    <div class="status-item"><span class="status-badge status-active">✓ {doc['status'].upper()}</span></div>
+                </div>
+
+                <h2>📡 Endpoints</h2>
+                <div class="endpoint-grid">
+                    <div class="endpoint-card">
+                        <span class="method-badge method-get">GET</span>
+                        <code class="endpoint-path">/health</code>
+                        <p class="endpoint-desc">Health check</p>
+                    </div>
+                    <div class="endpoint-card">
+                        <span class="method-badge method-post">POST</span>
+                        <code class="endpoint-path">/predict</code>
+                        <p class="endpoint-desc">Single loan prediction</p>
+                    </div>
+                    <div class="endpoint-card">
+                        <span class="method-badge method-post">POST</span>
+                        <code class="endpoint-path">/batch-predict</code>
+                        <p class="endpoint-desc">Batch predictions</p>
+                    </div>
+                    <div class="endpoint-card">
+                        <span class="method-badge method-get">GET</span>
+                        <code class="endpoint-path">/model-info</code>
+                        <p class="endpoint-desc">Model information</p>
+                    </div>
+                </div>
+
+                <div class="example-section">
+                    <h2>💡 Example Request</h2>
+                    <p class="example-label">POST /predict</p>
+                    <pre>{example_json}</pre>
+                </div>
+
+                <div class="example-section">
+                    <h2>📝 Request Fields</h2>
+                    <div class="endpoint">
+                        <strong>Required Fields:</strong>
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li><code>no_of_dependents</code>: Integer (number of dependents)</li>
+                            <li><code>education</code>: String ("Graduate" or "Not Graduate")</li>
+                            <li><code>self_employed</code>: String ("Yes" or "No")</li>
+                            <li><code>income_annum</code>: Float (annual income in currency units)</li>
+                            <li><code>loan_amount</code>: Float (requested loan amount)</li>
+                            <li><code>loan_term</code>: Integer (loan term in months)</li>
+                            <li><code>cibil_score</code>: Integer (credit score, typically 300-900)</li>
+                            <li><code>residential_assets_value</code>: Float (value of residential assets)</li>
+                            <li><code>commercial_assets_value</code>: Float (value of commercial assets)</li>
+                            <li><code>luxury_assets_value</code>: Float (value of luxury assets)</li>
+                            <li><code>bank_asset_value</code>: Float (value of bank assets)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="footer">
+                    <p>🚀 AI-Driven Loan Approval Prediction System | Ready for Production</p>
+                </div>
+            </div>
+        </body>
+        </html>
         """
         return html, 200, {'Content-Type': 'text/html'}
     return jsonify(doc), 200
