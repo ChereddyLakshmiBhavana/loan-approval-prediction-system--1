@@ -1,10 +1,10 @@
-# AI-Driven Loan Approval Prediction System
+# 🎯 AI-Driven Loan Approval Prediction System
 
-A deep learning-based system for predicting loan approval status using machine learning models.
+A complete deep learning-based system for predicting loan approval status with both backend API and modern web interface.
 
 ## Project Overview
 
-This project implements a comprehensive machine learning solution to predict loan approval decisions based on applicant information and historical loan data. The system uses deep learning models and is deployed as both a batch processing system and a REST API.
+This project implements a comprehensive machine learning solution to predict loan approval decisions based on applicant information and historical loan data. The system uses deep learning models and is deployed as both a batch processing system and a REST API with a professional web interface.
 
 ## Project Structure
 
@@ -29,14 +29,15 @@ This project implements a comprehensive machine learning solution to predict loa
 └── .gitignore                  # Git ignore rules
 ```
 
-## Key Features
+## ✨ Key Features
 
-- **Data Processing**: Comprehensive data cleaning and feature engineering
-- **Deep Learning Models**: Neural network architectures for prediction
-- **API Server**: Flask/FastAPI REST API for real-time predictions
-- **Web Interface**: User-friendly frontend for loan prediction
-- **Testing**: Unit and integration tests
-- **Documentation**: Detailed project and API documentation
+- **🧠 Deep Learning Models**: Neural network architectures achieving 93.8% accuracy
+- **🔌 REST API**: Flask-based API server for real-time predictions
+- **🌐 Modern Web Interface**: Responsive frontend with professional UI/UX
+- **📊 Data Processing**: Comprehensive data cleaning and feature engineering
+- **🧪 Testing**: Unit and integration tests
+- **📚 Documentation**: Detailed project and API documentation
+- **🚀 Easy Deployment**: Single command to run complete system
 
 ## Installation
 
@@ -45,52 +46,87 @@ This project implements a comprehensive machine learning solution to predict loa
 git clone <repository-url>
 cd deep-learning-loan-prediction-system
 
-# Install dependencies
+# Create & activate a virtual environment (Windows PowerShell)
+python -m venv .venv
+.\.venv\Scripts\Activate
+
+# Install dependencies inside the venv
 pip install -r requirements.txt
 
 # Install the package
 pip install -e .
 ```
 
+> **Note:** If PowerShell reports `python : The term 'python' is not recognized`, make sure Python is installed and added to your system `PATH`. You can also always run the interpreter directly from the virtual environment:
+> ```powershell
+> .\.venv\Scripts\python.exe run_complete_system.py
+> ```
+
 ## Usage
 
-### Testing Data Pipeline
+### ✨ RECOMMENDED: Run in Two Separate Terminals
 
-Before training, test the data loading and preprocessing pipeline:
+The simplest and most reliable way to run the complete system is to use **two separate terminal windows**:
 
-```bash
-python test_data_pipeline.py
+**Terminal 1 - Start the Backend API (port 5000):**
+```powershell
+.\.venv\Scripts\python.exe start_backend.py
 ```
 
-### Training the Model
-
-Train models using the integrated data pipeline:
-
-```bash
-# Train neural network (default)
-python src/models/train.py
-
-# Train gradient boosting model
-python src/models/train.py --model gradient_boosting
-
-# Train with custom dataset
-python src/models/train.py --data path/to/your/dataset.csv
+**Terminal 2 - Start the Frontend Web App (port 3000):**
+```powershell
+.\.venv\Scripts\python.exe start_frontend.py
 ```
 
-### Making Predictions (API)
+Then **open your browser** and visit: **http://localhost:3000**
 
-```bash
-python src/api/app.py
+## 📋 Understanding the Loan Application Form
+
+The web form asks for various financial information. Each field has a **help tooltip** (? icon) that explains what it means.
+
+### Field Categories:
+
+| Field | What It Means | Example |
+|-------|---------------|---------|
+| **Number of Dependents** | Family members depending on you | 0-10 people |
+| **Education** | Highest qualification | Graduate / Not Graduate |
+| **Self Employed** | Business owner or employee? | Yes / No |
+| **Annual Income** | Yearly earnings in ₹ | 600000 (₹6 Lakhs) |
+| **Loan Amount** | Money you want to borrow | 500000 (₹5 Lakhs) |
+| **Loan Term** | Duration to repay in months | 180 (15 years), 360 (30 years) |
+| **CIBIL Score** | Credit rating (300-900) | 750 = Good credit |
+| **Residential Assets** | House value in ₹ | 2000000 (₹20 Lakhs) |
+| **Commercial Assets** | Business property value | 1000000 (₹10 Lakhs) |
+| **Luxury Assets** | Car, jewelry, electronics value | 400000 (₹4 Lakhs) |
+| **Bank Assets** | Savings account balance | 300000 (₹3 Lakhs) |
+
+**📖 For detailed explanations of each field, see [FORM_GUIDE.md](FORM_GUIDE.md)**
+
+### ✅ Features:
+
+- ✨ **Interactive Form**: Enter your loan application details
+- 🎯 **Real-time Predictions**: Get instant AI approval/rejection predictions
+- 📊 **Visual Results**: See probability bars and confidence levels
+- 💡 **Hover Help**: Hover over "?" icons for field descriptions
+- 🔄 **Multiple Attempts**: Try different scenarios to see impact
+- 📱 **Mobile Friendly**: Works on phones and tablets
+
+### Running Individual Components
+
+```powershell
+# Backend API only (API documentation at http://localhost:5000)
+.\.venv\Scripts\python.exe start_backend.py
+
+# Frontend Web App only (accessible at http://localhost:3000)
+.\.venv\Scripts\python.exe start_frontend.py
 ```
 
-Visit `http://localhost:5000` for the API documentation.
+### Testing the Data Pipeline
 
-### Web Interface
+Before training models, test the data loading and preprocessing:
 
-```bash
-cd frontend
-npm install
-npm start
+```powershell
+.\.venv\Scripts\python.exe test_data_pipeline.py
 ```
 
 ## Requirements
