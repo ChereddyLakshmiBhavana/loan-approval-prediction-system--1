@@ -1,9 +1,5 @@
 [build]
-  command = "echo 'Static site: no build step required'"
   publish = "frontend"
-
-[build.environment]
-  NODE_VERSION = "20"
 
 [[headers]]
   for = "/*"
