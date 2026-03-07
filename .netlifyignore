@@ -12,3 +12,6 @@ notebooks/
 tests/
 data/
 logs/
+
+# Also ignore Python files in frontend
+frontend/server.py
