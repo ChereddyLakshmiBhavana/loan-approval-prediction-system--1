@@ -1,5 +1,7 @@
 [build]
   publish = "frontend"
+  command = ""
+  ignore = "exit 0"
 
 [[headers]]
   for = "/*"
