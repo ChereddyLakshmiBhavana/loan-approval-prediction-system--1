@@ -580,12 +580,17 @@
         let bankLoans = [];
 
         // API base URL strategy:
-        // 1) If page is served by backend, use same origin.
-        // 2) If opened locally from frontend dev server on :3000, use localhost backend.
-        // 3) Allow override via ?apiBase=https://your-api-url
+        // 1) Allow override via ?apiBase=https://your-api-url
+        // 2) Use localhost backend in local frontend development
+        // 3) Use deployed Render backend for Netlify-hosted frontend
+        // 4) Otherwise, same-origin fallback
         const apiBaseParam = new URLSearchParams(window.location.search).get('apiBase');
+        const DEFAULT_RENDER_API = 'https://loan-approval-prediction-system-1-wt4y.onrender.com';
+        const isLocalFrontend = window.location.origin.includes(':3000');
+        const isNetlifyHost = window.location.hostname.endsWith('netlify.app');
         const API_BASE_URL = apiBaseParam ||
-            (window.location.origin.includes(':3000') ? 'http://localhost:5000' : window.location.origin);
+            (isLocalFrontend ? 'http://localhost:5000' :
+                (isNetlifyHost ? DEFAULT_RENDER_API : window.location.origin));
 
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {

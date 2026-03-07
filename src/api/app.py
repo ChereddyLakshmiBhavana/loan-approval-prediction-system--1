@@ -14,7 +14,26 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from config.config import API_HOST, API_PORT, DEBUG_MODE, ALLOWED_ORIGINS
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": ALLOWED_ORIGINS}})
+
+
+def _normalized_origins(origins):
+    """Normalize CORS origins to avoid env formatting mismatches."""
+    cleaned = []
+    for origin in origins:
+        if not origin:
+            continue
+        value = origin.strip().strip('"').strip("'").rstrip('/')
+        if value:
+            cleaned.append(value)
+    return cleaned
+
+
+_origins = _normalized_origins(ALLOWED_ORIGINS)
+if _origins:
+    CORS(app, resources={r"/*": {"origins": _origins}})
+else:
+    # Safe fallback so deployments are not blocked by missing env vars.
+    CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Simple mock model for demonstration (since TensorFlow installation issues)
 class MockLoanModel:
