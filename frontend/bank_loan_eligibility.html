@@ -579,6 +579,14 @@
         let selectedLoan = null;
         let bankLoans = [];
 
+        // API base URL strategy:
+        // 1) If page is served by backend, use same origin.
+        // 2) If opened locally from frontend dev server on :3000, use localhost backend.
+        // 3) Allow override via ?apiBase=https://your-api-url
+        const apiBaseParam = new URLSearchParams(window.location.search).get('apiBase');
+        const API_BASE_URL = apiBaseParam ||
+            (window.location.origin.includes(':3000') ? 'http://localhost:5000' : window.location.origin);
+
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
             loadBanks();
@@ -588,7 +596,7 @@
         // Load available banks
         async function loadBanks() {
             try {
-                const response = await fetch('http://localhost:5000/banks');
+                const response = await fetch(`${API_BASE_URL}/banks`);
                 const data = await response.json();
 
                 const bankSelect = document.getElementById('bankSelect');
@@ -634,7 +642,7 @@
         // Load loans for selected bank
         async function loadBankLoans(bankId) {
             try {
-                const response = await fetch(`http://localhost:5000/banks/${bankId}/loans`);
+                const response = await fetch(`${API_BASE_URL}/banks/${bankId}/loans`);
                 const data = await response.json();
 
                 bankLoans = data.loans;
@@ -735,7 +743,7 @@
 
             try {
                 // Make API call
-                const response = await fetch('http://localhost:5000/predict-loan-eligibility', {
+                const response = await fetch(`${API_BASE_URL}/predict-loan-eligibility`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -758,7 +766,7 @@
             } catch (error) {
                 console.error('Error:', error);
                 loading.style.display = 'none';
-                errorMessage.textContent = `❌ Error: ${error.message}. Make sure the API server is running on http://localhost:5000`;
+                errorMessage.textContent = `❌ Error: ${error.message}. API base URL: ${API_BASE_URL}`;
                 errorMessage.style.display = 'block';
             }
 
