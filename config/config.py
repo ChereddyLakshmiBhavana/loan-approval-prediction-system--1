@@ -3,6 +3,17 @@
 import os
 from pathlib import Path
 
+
+def _get_bool_env(name: str, default: bool) -> bool:
+    """Parse boolean environment variables safely."""
+    return os.getenv(name, str(default)).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _get_list_env(name: str, default: str = ""):
+    """Return a comma-separated env var as a clean list."""
+    raw_value = os.getenv(name, default)
+    return [item.strip() for item in raw_value.split(",") if item.strip()]
+
 # Base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -22,7 +33,14 @@ LOG_FILE = LOG_DIR / "app.log"
 # API Configuration
 API_HOST = os.getenv("API_HOST", "0.0.0.0")
 API_PORT = int(os.getenv("API_PORT", 5000))
-DEBUG_MODE = os.getenv("DEBUG_MODE", "False").lower() == "true"
+DEBUG_MODE = _get_bool_env("DEBUG_MODE", False)
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development").strip().lower()
+
+# CORS configuration
+ALLOWED_ORIGINS = _get_list_env(
+    "ALLOWED_ORIGINS",
+    "http://localhost:3000,http://127.0.0.1:3000"
+)
 
 # Database Configuration (Optional)
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///app.db")

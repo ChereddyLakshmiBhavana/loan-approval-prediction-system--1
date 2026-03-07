@@ -11,10 +11,10 @@ import os
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from config.config import API_HOST, API_PORT, DEBUG_MODE
+from config.config import API_HOST, API_PORT, DEBUG_MODE, ALLOWED_ORIGINS
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": ALLOWED_ORIGINS}})
 
 # Simple mock model for demonstration (since TensorFlow installation issues)
 class MockLoanModel:
