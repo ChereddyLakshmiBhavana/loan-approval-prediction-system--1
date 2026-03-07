@@ -143,7 +143,11 @@ def home():
             'GET /health': 'Health check',
             'POST /predict': 'Single loan prediction',
             'POST /batch-predict': 'Batch loan predictions',
-            'GET /model-info': 'Model information'
+            'GET /model-info': 'Model information',
+            'GET /banks': 'List available banks',
+            'GET /banks/<bank_id>/loans': 'Get loans for a bank',
+            'GET /banks/<bank_id>/loans/<loan_id>': 'Get loan details',
+            'POST /predict-loan-eligibility': 'Predict eligibility for specific loan'
         },
         'documentation': {
             'predict_endpoint': {
@@ -405,6 +409,97 @@ def model_info():
         'f1_score': 0.81,
         'note': 'Using mock model due to TensorFlow installation issues. Replace with trained neural network when available.'
     }), 200
+
+# ===== NEW BANK-SPECIFIC LOAN ENDPOINTS =====
+
+@app.route('/banks', methods=['GET'])
+def get_banks():
+    """Get list of available banks"""
+    from src.data.bank_loans import get_banks_list
+    try:
+        banks = get_banks_list()
+        return jsonify({
+            'banks': banks,
+            'total_banks': len(banks)
+        }), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/banks/<bank_id>/loans', methods=['GET'])
+def get_bank_loans(bank_id):
+    """Get loan products for a specific bank"""
+    from src.data.bank_loans import get_bank_loans
+    try:
+        loans_data = get_bank_loans(bank_id)
+        if loans_data is None:
+            return jsonify({'error': 'Bank not found'}), 404
+
+        return jsonify(loans_data), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/banks/<bank_id>/loans/<loan_id>', methods=['GET'])
+def get_loan_details(bank_id, loan_id):
+    """Get detailed information about a specific loan product"""
+    from src.data.bank_loans import get_loan_details
+    try:
+        loan_data = get_loan_details(bank_id, loan_id)
+        if loan_data is None:
+            return jsonify({'error': 'Bank or loan not found'}), 404
+
+        return jsonify(loan_data), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/predict-loan-eligibility', methods=['POST'])
+def predict_loan_eligibility():
+    """
+    Predict eligibility for a specific bank loan product
+
+    Expected JSON:
+    {
+        "bank_id": "SBI",
+        "loan_id": "home_loan",
+        "user_data": {
+            "no_of_dependents": 1,
+            "education": "Graduate",
+            "self_employed": "No",
+            "income_annum": 600000,
+            "loan_amount": 2000000,
+            "loan_term": 240,
+            "cibil_score": 780,
+            "residential_assets_value": 400000,
+            "commercial_assets_value": 100000,
+            "luxury_assets_value": 50000,
+            "bank_asset_value": 100000
+        }
+    }
+    """
+    from src.models.loan_eligibility_model import predict_loan_eligibility as predict_eligibility
+
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+
+        bank_id = data.get('bank_id')
+        loan_id = data.get('loan_id')
+        user_data = data.get('user_data')
+
+        if not bank_id or not loan_id or not user_data:
+            return jsonify({'error': 'Missing required fields: bank_id, loan_id, user_data'}), 400
+
+        # Get eligibility prediction
+        result = predict_eligibility(user_data, bank_id, loan_id)
+
+        if 'error' in result:
+            return jsonify(result), 400
+
+        return jsonify(result), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.errorhandler(404)
 def not_found(error):

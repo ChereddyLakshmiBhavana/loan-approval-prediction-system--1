@@ -7,9 +7,14 @@ app = Flask(__name__, static_folder='../frontend')
 @app.route('/')
 def serve_frontend():
     """Serve the main frontend application"""
-    frontend_path = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'index.html')
+    frontend_path = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'bank_loan_eligibility.html')
+    print(f"DEBUG: Serving file from: {frontend_path}")
+    print(f"DEBUG: File exists: {os.path.exists(frontend_path)}")
     with open(frontend_path, 'r', encoding='utf-8') as f:
-        return f.read()
+        content = f.read()
+        print(f"DEBUG: Content length: {len(content)}")
+        print(f"DEBUG: First 100 chars: {content[:100]}")
+        return content
 
 @app.route('/static/<path:filename>')
 def serve_static(filename):
