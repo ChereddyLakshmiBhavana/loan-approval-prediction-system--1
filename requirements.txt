@@ -13,7 +13,6 @@ gunicorn==22.0.0
 
 # Data Preprocessing
 scipy==1.11.1
-scikit-preprocessing==0.2.0
 
 # Visualization
 matplotlib==3.7.2
@@ -40,7 +39,6 @@ flake8==6.0.0
 pylint==2.17.5
 
 # Logging & Monitoring
-python-logging==0.4.9.7
 
 # Database (Optional)
 sqlalchemy==2.0.20
