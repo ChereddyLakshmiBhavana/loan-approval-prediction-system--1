@@ -445,6 +445,19 @@
     </div>
 
     <script>
+        // API base URL strategy:
+        // 1) Allow override via ?apiBase=https://your-api-url
+        // 2) Use localhost backend in local frontend development
+        // 3) Use deployed Render backend for Netlify-hosted frontend
+        // 4) Otherwise, same-origin fallback
+        const apiBaseParam = new URLSearchParams(window.location.search).get('apiBase');
+        const DEFAULT_RENDER_API = 'https://loan-approval-prediction-system-1-wt4y.onrender.com';
+        const isLocalFrontend = window.location.origin.includes(':3000');
+        const isNetlifyHost = window.location.hostname.endsWith('netlify.app');
+        const API_BASE_URL = apiBaseParam ||
+            (isLocalFrontend ? 'http://localhost:5000' :
+                (isNetlifyHost ? DEFAULT_RENDER_API : window.location.origin));
+
         document.getElementById('loanForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
@@ -469,7 +482,7 @@
 
             try {
                 // Make API call
-                const response = await fetch('http://localhost:5000/predict', {
+                const response = await fetch(`${API_BASE_URL}/predict`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -492,7 +505,7 @@
             } catch (error) {
                 console.error('Error:', error);
                 loading.style.display = 'none';
-                errorMessage.textContent = `❌ Error: ${error.message}. Make sure the API server is running on http://localhost:5000`;
+                errorMessage.textContent = `❌ Error: ${error.message}. API base URL: ${API_BASE_URL}`;
                 errorMessage.style.display = 'block';
             }
 

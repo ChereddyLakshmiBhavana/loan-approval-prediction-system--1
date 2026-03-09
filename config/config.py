@@ -42,6 +42,14 @@ ALLOWED_ORIGINS = _get_list_env(
     "http://localhost:3000,http://127.0.0.1:3000"
 )
 
+# Always include known frontend hosts so browser requests work across devices.
+_default_frontend_origins = [
+    "https://aidriven-loan-approval-prediction.netlify.app",
+]
+for _origin in _default_frontend_origins:
+    if _origin not in ALLOWED_ORIGINS:
+        ALLOWED_ORIGINS.append(_origin)
+
 # Database Configuration (Optional)
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///app.db")
 
