@@ -2,6 +2,11 @@
 
 A complete deep learning-based system for predicting loan approval status with both backend API and modern web interface.
 
+## Live Deployment
+
+- Backend API: https://loan-approval-backend.onrender.com
+- Health check: https://loan-approval-backend.onrender.com/health
+
 ## Project Overview
 
 This project implements a comprehensive machine learning solution to predict loan approval decisions based on applicant information and historical loan data. The system uses deep learning models and is deployed as both a batch processing system and a REST API with a professional web interface.
