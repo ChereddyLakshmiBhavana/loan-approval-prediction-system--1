@@ -4,6 +4,7 @@ A complete deep learning-based system for predicting loan approval status with b
 
 ## Live Deployment
 
+- Frontend App: https://aidriven-loan-approval-prediction.netlify.app/bank_loan_eligibility.html
 - Backend API: https://loan-approval-backend.onrender.com
 - Health check: https://loan-approval-backend.onrender.com/health
 
