@@ -7,6 +7,8 @@ from pathlib import Path
 import numpy as np
 import pickle
 import os
+import sqlite3
+from datetime import datetime, timedelta, timezone
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -14,6 +16,80 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from config.config import API_HOST, API_PORT, DEBUG_MODE, ALLOWED_ORIGINS
 
 app = Flask(__name__)
+
+ANALYTICS_DB_PATH = Path(__file__).parent.parent.parent / 'logs' / 'usage_analytics.db'
+USAGE_STATS_TOKEN = os.getenv('USAGE_STATS_TOKEN', '').strip()
+
+
+def _init_analytics_db():
+    """Create analytics tables if they do not exist."""
+    ANALYTICS_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with sqlite3.connect(ANALYTICS_DB_PATH) as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS api_requests (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                event_time TEXT NOT NULL,
+                endpoint TEXT NOT NULL,
+                method TEXT NOT NULL,
+                status_code INTEGER NOT NULL,
+                client_ip TEXT,
+                user_agent TEXT
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_api_requests_time
+            ON api_requests(event_time)
+            """
+        )
+        conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_api_requests_endpoint
+            ON api_requests(endpoint)
+            """
+        )
+
+
+def _client_ip():
+    """Resolve client IP with support for reverse proxies."""
+    forwarded_for = request.headers.get('X-Forwarded-For', '')
+    if forwarded_for:
+        return forwarded_for.split(',')[0].strip()
+    return request.remote_addr or 'unknown'
+
+
+def _track_request(response):
+    """Persist request metadata for basic usage analytics."""
+    if request.path.startswith('/usage-stats'):
+        return response
+
+    try:
+        with sqlite3.connect(ANALYTICS_DB_PATH) as conn:
+            conn.execute(
+                """
+                INSERT INTO api_requests (
+                    event_time, endpoint, method, status_code, client_ip, user_agent
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    datetime.now(timezone.utc).isoformat(),
+                    request.path,
+                    request.method,
+                    int(response.status_code),
+                    _client_ip(),
+                    (request.headers.get('User-Agent') or '')[:255],
+                ),
+            )
+    except Exception:
+        # Analytics must never break API responses.
+        pass
+
+    return response
+
+
+_init_analytics_db()
 
 
 def _normalized_origins(origins):
@@ -34,6 +110,8 @@ if _origins:
 else:
     # Safe fallback so deployments are not blocked by missing env vars.
     CORS(app, resources={r"/*": {"origins": "*"}})
+
+app.after_request(_track_request)
 
 # Simple mock model for demonstration (since TensorFlow installation issues)
 class MockLoanModel:
@@ -160,6 +238,7 @@ def home():
         'endpoints': {
             'GET /': 'API documentation (this endpoint)',
             'GET /health': 'Health check',
+            'GET /usage-stats': 'Usage analytics summary',
             'POST /predict': 'Single loan prediction',
             'POST /batch-predict': 'Batch loan predictions',
             'GET /model-info': 'Model information',
@@ -327,6 +406,90 @@ def health_check():
         'status': 'healthy',
         'service': 'Loan Approval Prediction API',
         'version': '1.0.0'
+    }), 200
+
+
+@app.route('/usage-stats', methods=['GET'])
+def usage_stats():
+    """Get API usage counts and recent activity details."""
+    if USAGE_STATS_TOKEN:
+        token = request.args.get('token', '').strip()
+        if token != USAGE_STATS_TOKEN:
+            return jsonify({'error': 'Unauthorized'}), 401
+
+    days = request.args.get('days', '7')
+    limit = request.args.get('limit', '20')
+    try:
+        days = max(1, min(int(days), 90))
+        limit = max(1, min(int(limit), 100))
+    except ValueError:
+        return jsonify({'error': 'days and limit must be integers'}), 400
+
+    since = datetime.now(timezone.utc) - timedelta(days=days)
+    since_iso = since.isoformat()
+
+    with sqlite3.connect(ANALYTICS_DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+
+        totals = conn.execute(
+            """
+            SELECT
+                COUNT(*) AS total_requests,
+                COUNT(DISTINCT client_ip) AS unique_users,
+                SUM(CASE WHEN endpoint = '/predict-loan-eligibility' THEN 1 ELSE 0 END) AS eligibility_predictions
+            FROM api_requests
+            WHERE event_time >= ?
+            """,
+            (since_iso,),
+        ).fetchone()
+
+        by_endpoint = conn.execute(
+            """
+            SELECT endpoint, COUNT(*) AS request_count
+            FROM api_requests
+            WHERE event_time >= ?
+            GROUP BY endpoint
+            ORDER BY request_count DESC
+            """,
+            (since_iso,),
+        ).fetchall()
+
+        recent_users = conn.execute(
+            """
+            SELECT
+                client_ip,
+                MAX(event_time) AS last_seen,
+                COUNT(*) AS requests
+            FROM api_requests
+            WHERE event_time >= ?
+            GROUP BY client_ip
+            ORDER BY last_seen DESC
+            LIMIT ?
+            """,
+            (since_iso, limit),
+        ).fetchall()
+
+    return jsonify({
+        'window_days': days,
+        'total_requests': int(totals['total_requests'] or 0),
+        'unique_users': int(totals['unique_users'] or 0),
+        'eligibility_predictions': int(totals['eligibility_predictions'] or 0),
+        'endpoint_breakdown': [
+            {
+                'endpoint': row['endpoint'],
+                'request_count': int(row['request_count'])
+            }
+            for row in by_endpoint
+        ],
+        'recent_users': [
+            {
+                'client_ip': row['client_ip'],
+                'last_seen': row['last_seen'],
+                'requests': int(row['requests'])
+            }
+            for row in recent_users
+        ],
+        'note': 'Set USAGE_STATS_TOKEN env var to protect this endpoint in production.'
     }), 200
 
 @app.route('/predict', methods=['POST'])

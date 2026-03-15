@@ -570,6 +570,9 @@
 
         <div class="footer">
             <p>🏦 Bank-Specific Loan Eligibility | 🔬 Powered by Deep Learning | 🎯 93.8% Accuracy</p>
+            <p style="margin-top: 8px;">
+                <a href="usage_dashboard.html" style="color: #4f46e5; font-weight: 600;">Open Usage Dashboard</a>
+            </p>
         </div>
     </div>
 
@@ -585,15 +588,98 @@
         // 3) Use deployed Render backend for Netlify-hosted frontend
         // 4) Otherwise, same-origin fallback
         const apiBaseParam = new URLSearchParams(window.location.search).get('apiBase');
-        const DEFAULT_RENDER_API = 'https://loan-approval-prediction-system-1-wt4y.onrender.com';
+        const RENDER_API_CANDIDATES = [
+            'https://loan-approval-backend.onrender.com',
+            'https://loan-approval-prediction-system-1-wt4y.onrender.com'
+        ];
         const isLocalFrontend = window.location.origin.includes(':3000');
         const isNetlifyHost = window.location.hostname.endsWith('netlify.app');
-        const API_BASE_URL = apiBaseParam ||
+        let API_BASE_URL = apiBaseParam ||
             (isLocalFrontend ? 'http://localhost:5000' :
-                (isNetlifyHost ? DEFAULT_RENDER_API : window.location.origin));
+                (isNetlifyHost ? RENDER_API_CANDIDATES[0] : window.location.origin));
+        const HEALTH_CHECK_TIMEOUT_MS = 90000;
+        const RETRY_DELAYS_MS = [0, 2500, 5000, 8000];
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function isRetriableStatus(status) {
+            return [408, 425, 429, 500, 502, 503, 504].includes(status);
+        }
+
+        async function waitForBackendReady() {
+            if (isLocalFrontend || !isNetlifyHost) {
+                return;
+            }
+
+            const startedAt = Date.now();
+            while ((Date.now() - startedAt) < HEALTH_CHECK_TIMEOUT_MS) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/health`, { cache: 'no-store' });
+                    if (response.ok) {
+                        return;
+                    }
+                } catch (error) {
+                    // Keep polling while backend wakes from cold start.
+                }
+
+                await sleep(4000);
+            }
+        }
+
+        async function fetchJsonWithRetry(path, options = {}) {
+            let lastError = null;
+
+            for (let attempt = 0; attempt < RETRY_DELAYS_MS.length; attempt++) {
+                const retryDelay = RETRY_DELAYS_MS[attempt];
+                if (retryDelay > 0) {
+                    await sleep(retryDelay);
+                }
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}${path}`, options);
+
+                    if (response.ok) {
+                        return await response.json();
+                    }
+
+                    if (!isRetriableStatus(response.status) || attempt === RETRY_DELAYS_MS.length - 1) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                } catch (error) {
+                    lastError = error;
+                    if (attempt === RETRY_DELAYS_MS.length - 1) {
+                        break;
+                    }
+                }
+            }
+
+            throw lastError || new Error('Unable to reach backend API');
+        }
+
+        async function resolveApiBaseUrl() {
+            if (apiBaseParam || isLocalFrontend || !isNetlifyHost) {
+                return;
+            }
+
+            for (const candidate of RENDER_API_CANDIDATES) {
+                try {
+                    const response = await fetch(`${candidate}/health`, { cache: 'no-store' });
+                    if (response.ok) {
+                        API_BASE_URL = candidate;
+                        return;
+                    }
+                } catch (error) {
+                    // Try the next candidate endpoint.
+                }
+            }
+        }
 
         // Initialize the application
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
+            await resolveApiBaseUrl();
+            await waitForBackendReady();
             loadBanks();
             setupEventListeners();
         });
@@ -601,8 +687,7 @@
         // Load available banks
         async function loadBanks() {
             try {
-                const response = await fetch(`${API_BASE_URL}/banks`);
-                const data = await response.json();
+                const data = await fetchJsonWithRetry('/banks');
 
                 const bankSelect = document.getElementById('bankSelect');
                 data.banks.forEach(bank => {
@@ -647,8 +732,7 @@
         // Load loans for selected bank
         async function loadBankLoans(bankId) {
             try {
-                const response = await fetch(`${API_BASE_URL}/banks/${bankId}/loans`);
-                const data = await response.json();
+                const data = await fetchJsonWithRetry(`/banks/${bankId}/loans`);
 
                 bankLoans = data.loans;
                 displayLoanOptions(data.loans);
@@ -748,19 +832,13 @@
 
             try {
                 // Make API call
-                const response = await fetch(`${API_BASE_URL}/predict-loan-eligibility`, {
+                const result = await fetchJsonWithRetry('/predict-loan-eligibility', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(requestData)
                 });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const result = await response.json();
 
                 // Hide loading
                 loading.style.display = 'none';
