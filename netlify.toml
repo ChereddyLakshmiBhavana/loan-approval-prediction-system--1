@@ -1,5 +1,7 @@
 [build]
-  publish = "frontend"
+  base = "frontend"
+  publish = "."
+  command = "echo Static frontend deploy"
 
 [build.processing]
   skip_processing = true
