@@ -451,12 +451,71 @@
         // 3) Use deployed Render backend for Netlify-hosted frontend
         // 4) Otherwise, same-origin fallback
         const apiBaseParam = new URLSearchParams(window.location.search).get('apiBase');
-        const DEFAULT_RENDER_API = 'https://loan-approval-prediction-system-1-wt4y.onrender.com';
+        const RENDER_API_CANDIDATES = [
+            'https://loan-approval-backend.onrender.com',
+            'https://loan-approval-prediction-system-1-wt4y.onrender.com'
+        ];
         const isLocalFrontend = window.location.origin.includes(':3000');
         const isNetlifyHost = window.location.hostname.endsWith('netlify.app');
-        const API_BASE_URL = apiBaseParam ||
+        let API_BASE_URL = apiBaseParam ||
             (isLocalFrontend ? 'http://localhost:5000' :
-                (isNetlifyHost ? DEFAULT_RENDER_API : window.location.origin));
+                (isNetlifyHost ? RENDER_API_CANDIDATES[0] : window.location.origin));
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function resolveApiBaseUrl() {
+            if (apiBaseParam || isLocalFrontend || !isNetlifyHost) {
+                return;
+            }
+
+            for (const candidate of RENDER_API_CANDIDATES) {
+                try {
+                    const response = await fetch(`${candidate}/health`, { cache: 'no-store' });
+                    if (response.ok) {
+                        API_BASE_URL = candidate;
+                        return;
+                    }
+                } catch (error) {
+                    // Try next candidate endpoint.
+                }
+            }
+        }
+
+        async function fetchPredictionWithRetry(payload) {
+            const retryDelays = [0, 2500, 5000, 8000];
+
+            for (let attempt = 0; attempt < retryDelays.length; attempt++) {
+                if (retryDelays[attempt] > 0) {
+                    await sleep(retryDelays[attempt]);
+                }
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/predict`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.ok) {
+                        return await response.json();
+                    }
+
+                    if (attempt === retryDelays.length - 1) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                } catch (error) {
+                    if (attempt === retryDelays.length - 1) {
+                        throw error;
+                    }
+                }
+            }
+        }
+
+        resolveApiBaseUrl();
 
         document.getElementById('loanForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -482,19 +541,7 @@
 
             try {
                 // Make API call
-                const response = await fetch(`${API_BASE_URL}/predict`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const result = await response.json();
+                const result = await fetchPredictionWithRetry(data);
 
                 // Hide loading
                 loading.style.display = 'none';
