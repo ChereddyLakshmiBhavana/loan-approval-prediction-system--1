@@ -48,6 +48,10 @@
             box-shadow: 0 14px 38px rgba(2, 6, 23, 0.35);
         }
 
+        .hidden {
+            display: none;
+        }
+
         .hero {
             display: flex;
             justify-content: space-between;
@@ -191,6 +195,12 @@
             color: var(--muted);
         }
 
+        .access-copy {
+            color: var(--muted);
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
         @media (max-width: 920px) {
             .controls {
                 grid-template-columns: 1fr 1fr;
@@ -212,12 +222,15 @@
         <div class="hero">
             <div>
                 <h1>Usage Analytics Dashboard</h1>
-                <p>Track predictor usage, active users, and endpoint traffic.</p>
+                <p>Admin-only usage analytics for predictor traffic and activity.</p>
             </div>
             <div class="status" id="statusText">Ready</div>
         </div>
 
-        <div class="panel">
+        <div class="panel" id="accessPanel">
+            <p class="access-copy">
+                This page is for admin access only. Enter your admin token to unlock usage statistics.
+            </p>
             <div class="controls">
                 <div class="control">
                     <label for="apiBase">API Base URL</label>
@@ -232,12 +245,15 @@
                     <input id="token" type="password" placeholder="USAGE_STATS_TOKEN" />
                 </div>
                 <div class="actions">
-                    <button id="refreshBtn" type="button">Refresh</button>
+                    <button id="unlockBtn" type="button">Unlock Dashboard</button>
+                    <button id="refreshBtn" type="button" class="hidden">Refresh</button>
                     <button id="copyBtn" class="ghost" type="button">Copy JSON</button>
+                    <button id="logoutBtn" class="ghost hidden" type="button">Lock</button>
                 </div>
             </div>
         </div>
 
+        <div id="dashboardContent" class="hidden">
         <div class="panel summary">
             <div class="stat">
                 <h2>Total Requests</h2>
@@ -287,16 +303,17 @@
                 </table>
             </div>
         </div>
+        </div>
     </div>
 
     <script>
         let latestPayload = null;
+        const ADMIN_TOKEN_STORAGE_KEY = "loanAdminUsageToken";
 
         function initializeControlsFromQuery() {
             const params = new URLSearchParams(window.location.search);
             const apiBase = params.get("apiBase");
             const days = params.get("days");
-            const token = params.get("token");
 
             if (apiBase) {
                 document.getElementById("apiBase").value = apiBase;
@@ -306,9 +323,17 @@
                 document.getElementById("days").value = days;
             }
 
-            if (token) {
-                document.getElementById("token").value = token;
+            const storedToken = sessionStorage.getItem(ADMIN_TOKEN_STORAGE_KEY);
+            if (storedToken) {
+                document.getElementById("token").value = storedToken;
             }
+        }
+
+        function setDashboardVisibility(isUnlocked) {
+            document.getElementById("dashboardContent").classList.toggle("hidden", !isUnlocked);
+            document.getElementById("refreshBtn").classList.toggle("hidden", !isUnlocked);
+            document.getElementById("logoutBtn").classList.toggle("hidden", !isUnlocked);
+            document.getElementById("unlockBtn").classList.toggle("hidden", isUnlocked);
         }
 
         function setStatus(message, isError = false) {
@@ -351,10 +376,14 @@
                 return;
             }
 
-            const params = new URLSearchParams({ days, limit: "50" });
-            if (token) {
-                params.set("token", token);
+            if (!token) {
+                setDashboardVisibility(false);
+                setStatus("Admin token is required", true);
+                return;
             }
+
+            const params = new URLSearchParams({ days, limit: "50" });
+            params.set("token", token);
 
             refreshBtn.disabled = true;
             setStatus("Loading usage statistics...");
@@ -370,6 +399,8 @@
 
                 const payload = await response.json();
                 latestPayload = payload;
+                sessionStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, token);
+                setDashboardVisibility(true);
 
                 document.getElementById("totalRequests").textContent = payload.total_requests ?? 0;
                 document.getElementById("uniqueUsers").textContent = payload.unique_users ?? 0;
@@ -387,10 +418,24 @@
 
                 setStatus(`Loaded successfully for last ${payload.window_days} day(s).`);
             } catch (error) {
+                setDashboardVisibility(false);
                 setStatus(error.message, true);
             } finally {
                 refreshBtn.disabled = false;
             }
+        }
+
+        function lockDashboard() {
+            latestPayload = null;
+            sessionStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+            document.getElementById("token").value = "";
+            document.getElementById("totalRequests").textContent = "-";
+            document.getElementById("uniqueUsers").textContent = "-";
+            document.getElementById("predictions").textContent = "-";
+            renderRows("endpointRows", [], 2);
+            renderRows("userRows", [], 3);
+            setDashboardVisibility(false);
+            setStatus("Dashboard locked");
         }
 
         async function copyJson() {
@@ -407,11 +452,13 @@
             }
         }
 
+        document.getElementById("unlockBtn").addEventListener("click", loadUsageStats);
         document.getElementById("refreshBtn").addEventListener("click", loadUsageStats);
         document.getElementById("copyBtn").addEventListener("click", copyJson);
+        document.getElementById("logoutBtn").addEventListener("click", lockDashboard);
 
         initializeControlsFromQuery();
-        loadUsageStats();
+        setDashboardVisibility(false);
     </script>
 </body>
 </html>
