@@ -105,11 +105,10 @@ def _normalized_origins(origins):
 
 
 _origins = _normalized_origins(ALLOWED_ORIGINS)
-if _origins:
-    CORS(app, resources={r"/*": {"origins": _origins}})
-else:
-    # Safe fallback so deployments are not blocked by missing env vars.
-    CORS(app, resources={r"/*": {"origins": "*"}})
+
+# This API is consumed by static frontends that may move across Netlify subdomains.
+# Keep CORS open so deployment URL changes do not break production requests.
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 app.after_request(_track_request)
 

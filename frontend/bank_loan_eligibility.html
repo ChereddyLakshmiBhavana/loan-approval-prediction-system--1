@@ -597,6 +597,7 @@
         let API_BASE_URL = apiBaseParam ||
             (isLocalFrontend ? 'http://localhost:5000' :
                 (isNetlifyHost ? RENDER_API_CANDIDATES[0] : window.location.origin));
+        const BANKS_ENDPOINT = '/banks';
         const HEALTH_CHECK_TIMEOUT_MS = 90000;
         const RETRY_DELAYS_MS = [0, 2500, 5000, 8000];
 
@@ -608,7 +609,7 @@
             return [408, 425, 429, 500, 502, 503, 504].includes(status);
         }
 
-        async function waitForBackendReady() {
+        async function waitForBackendReady(readyPath = '/health') {
             if (isLocalFrontend || !isNetlifyHost) {
                 return;
             }
@@ -616,7 +617,7 @@
             const startedAt = Date.now();
             while ((Date.now() - startedAt) < HEALTH_CHECK_TIMEOUT_MS) {
                 try {
-                    const response = await fetch(`${API_BASE_URL}/health`, { cache: 'no-store' });
+                    const response = await fetch(`${API_BASE_URL}${readyPath}`, { cache: 'no-store' });
                     if (response.ok) {
                         return;
                     }
@@ -658,14 +659,14 @@
             throw lastError || new Error('Unable to reach backend API');
         }
 
-        async function resolveApiBaseUrl() {
+        async function resolveApiBaseUrl(requiredPath = '/health') {
             if (apiBaseParam || isLocalFrontend || !isNetlifyHost) {
                 return;
             }
 
             for (const candidate of RENDER_API_CANDIDATES) {
                 try {
-                    const response = await fetch(`${candidate}/health`, { cache: 'no-store' });
+                    const response = await fetch(`${candidate}${requiredPath}`, { cache: 'no-store' });
                     if (response.ok) {
                         API_BASE_URL = candidate;
                         return;
@@ -678,8 +679,8 @@
 
         // Initialize the application
         document.addEventListener('DOMContentLoaded', async function() {
-            await resolveApiBaseUrl();
-            await waitForBackendReady();
+            await resolveApiBaseUrl(BANKS_ENDPOINT);
+            await waitForBackendReady(BANKS_ENDPOINT);
             loadBanks();
             setupEventListeners();
         });
@@ -698,7 +699,7 @@
                 });
             } catch (error) {
                 console.error('Error loading banks:', error);
-                showError('Failed to load banks. Make sure the API server is running.');
+                showError(`Failed to load banks from ${API_BASE_URL}.`);
             }
         }
 
