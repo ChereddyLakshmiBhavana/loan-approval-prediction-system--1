@@ -45,6 +45,7 @@ ALLOWED_ORIGINS = _get_list_env(
 # Always include known frontend hosts so browser requests work across devices.
 _default_frontend_origins = [
     "https://aidriven-loan-approval-prediction.netlify.app",
+    "https://loan-approval-prediction-system1.netlify.app",
 ]
 for _origin in _default_frontend_origins:
     if _origin not in ALLOWED_ORIGINS:
