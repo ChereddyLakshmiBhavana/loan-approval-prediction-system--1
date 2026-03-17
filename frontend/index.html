@@ -452,8 +452,8 @@
         // 4) Otherwise, same-origin fallback
         const apiBaseParam = new URLSearchParams(window.location.search).get('apiBase');
         const RENDER_API_CANDIDATES = [
-            'https://loan-approval-backend.onrender.com',
-            'https://loan-approval-prediction-system-1-wt4y.onrender.com'
+            'https://loan-approval-prediction-system-1-wt4y.onrender.com',
+            'https://loan-approval-backend.onrender.com'
         ];
         const isLocalFrontend = window.location.origin.includes(':3000');
         const isNetlifyHost = window.location.hostname.endsWith('netlify.app');
