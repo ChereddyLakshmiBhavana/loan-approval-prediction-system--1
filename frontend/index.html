@@ -456,17 +456,19 @@
             'https://loan-approval-backend.onrender.com'
         ];
         const isLocalFrontend = window.location.origin.includes(':3000');
-        const isNetlifyHost = window.location.hostname.endsWith('netlify.app');
+        const isHostedStaticFrontend =
+            window.location.hostname.endsWith('netlify.app') ||
+            window.location.hostname.endsWith('vercel.app');
         let API_BASE_URL = apiBaseParam ||
             (isLocalFrontend ? 'http://localhost:5000' :
-                (isNetlifyHost ? RENDER_API_CANDIDATES[0] : window.location.origin));
+                (isHostedStaticFrontend ? RENDER_API_CANDIDATES[0] : window.location.origin));
 
         function sleep(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
         }
 
         async function resolveApiBaseUrl() {
-            if (apiBaseParam || isLocalFrontend || !isNetlifyHost) {
+            if (apiBaseParam || isLocalFrontend || !isHostedStaticFrontend) {
                 return;
             }
 

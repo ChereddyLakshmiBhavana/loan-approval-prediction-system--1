@@ -590,10 +590,12 @@
             'https://loan-approval-backend.onrender.com'
         ];
         const isLocalFrontend = window.location.origin.includes(':3000');
-        const isNetlifyHost = window.location.hostname.endsWith('netlify.app');
+        const isHostedStaticFrontend =
+            window.location.hostname.endsWith('netlify.app') ||
+            window.location.hostname.endsWith('vercel.app');
         let API_BASE_URL = apiBaseParam ||
             (isLocalFrontend ? 'http://localhost:5000' :
-                (isNetlifyHost ? RENDER_API_CANDIDATES[0] : window.location.origin));
+                (isHostedStaticFrontend ? RENDER_API_CANDIDATES[0] : window.location.origin));
         const BANKS_ENDPOINT = '/banks';
         const HEALTH_CHECK_TIMEOUT_MS = 90000;
         const RETRY_DELAYS_MS = [0, 2500, 5000, 8000];
@@ -607,7 +609,7 @@
         }
 
         async function waitForBackendReady(readyPath = '/health') {
-            if (isLocalFrontend || !isNetlifyHost) {
+            if (isLocalFrontend || !isHostedStaticFrontend) {
                 return;
             }
 
@@ -657,7 +659,7 @@
         }
 
         async function resolveApiBaseUrl(requiredPath = '/health') {
-            if (apiBaseParam || isLocalFrontend || !isNetlifyHost) {
+            if (apiBaseParam || isLocalFrontend || !isHostedStaticFrontend) {
                 return;
             }
 
