@@ -1,0 +1,27 @@
+name: Keep Render Backend Awake
+
+on:
+  schedule:
+    # Every 15 minutes from 01:00 to 16:59 UTC
+    # This keeps usage within most free GitHub Actions limits while covering active hours.
+    - cron: "*/15 1-16 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping-backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Wake and verify backend
+        run: |
+          set -e
+          BASE_URL="https://loan-approval-prediction-system-1-wt4y.onrender.com"
+
+          echo "Pinging health endpoint..."
+          curl --fail --silent --show-error --max-time 25 "$BASE_URL/health" > /dev/null
+
+          echo "Pinging banks endpoint..."
+          curl --fail --silent --show-error --max-time 25 "$BASE_URL/banks" > /dev/null
+
+          echo "Backend is reachable."
