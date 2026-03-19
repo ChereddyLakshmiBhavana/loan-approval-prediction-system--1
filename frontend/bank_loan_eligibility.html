@@ -597,6 +597,7 @@
             (isLocalFrontend ? 'http://localhost:5000' :
                 (isHostedStaticFrontend ? RENDER_API_CANDIDATES[0] : window.location.origin));
         const BANKS_ENDPOINT = '/banks';
+        const REQUEST_TIMEOUT_MS = 25000;
         const HEALTH_CHECK_TIMEOUT_MS = 90000;
         const RETRY_DELAYS_MS = [0, 2500, 5000, 8000];
 
@@ -608,6 +609,35 @@
             return [408, 425, 429, 500, 502, 503, 504].includes(status);
         }
 
+        function getApiCandidates() {
+            if (apiBaseParam) {
+                return [apiBaseParam];
+            }
+
+            if (isLocalFrontend || !isHostedStaticFrontend) {
+                return [API_BASE_URL];
+            }
+
+            const orderedCandidates = [
+                API_BASE_URL,
+                ...RENDER_API_CANDIDATES.filter(candidate => candidate !== API_BASE_URL)
+            ];
+
+            return [...new Set(orderedCandidates)];
+        }
+
+        async function fetchWithTimeout(url, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+            try {
+                const mergedOptions = { ...options, signal: controller.signal };
+                return await fetch(url, mergedOptions);
+            } finally {
+                clearTimeout(timeoutId);
+            }
+        }
+
         async function waitForBackendReady(readyPath = '/health') {
             if (isLocalFrontend || !isHostedStaticFrontend) {
                 return;
@@ -615,13 +645,20 @@
 
             const startedAt = Date.now();
             while ((Date.now() - startedAt) < HEALTH_CHECK_TIMEOUT_MS) {
-                try {
-                    const response = await fetch(`${API_BASE_URL}${readyPath}`, { cache: 'no-store' });
-                    if (response.ok) {
-                        return;
+                for (const candidate of getApiCandidates()) {
+                    try {
+                        const response = await fetchWithTimeout(
+                            `${candidate}${readyPath}`,
+                            { cache: 'no-store' }
+                        );
+
+                        if (response.ok) {
+                            API_BASE_URL = candidate;
+                            return;
+                        }
+                    } catch (error) {
+                        // Keep polling while backend wakes from cold start.
                     }
-                } catch (error) {
-                    // Keep polling while backend wakes from cold start.
                 }
 
                 await sleep(4000);
@@ -637,20 +674,28 @@
                     await sleep(retryDelay);
                 }
 
-                try {
-                    const response = await fetch(`${API_BASE_URL}${path}`, options);
+                for (const candidate of getApiCandidates()) {
+                    try {
+                        const response = await fetchWithTimeout(`${candidate}${path}`, options);
 
-                    if (response.ok) {
-                        return await response.json();
-                    }
+                        if (response.ok) {
+                            API_BASE_URL = candidate;
+                            return await response.json();
+                        }
 
-                    if (!isRetriableStatus(response.status) || attempt === RETRY_DELAYS_MS.length - 1) {
-                        throw new Error(`HTTP ${response.status}`);
-                    }
-                } catch (error) {
-                    lastError = error;
-                    if (attempt === RETRY_DELAYS_MS.length - 1) {
-                        break;
+                        const statusError = new Error(`HTTP ${response.status} from ${candidate}`);
+                        statusError.status = response.status;
+                        if (!isRetriableStatus(response.status)) {
+                            throw statusError;
+                        }
+
+                        lastError = statusError;
+                    } catch (error) {
+                        lastError = error;
+
+                        if (typeof error.status === 'number' && !isRetriableStatus(error.status)) {
+                            throw error;
+                        }
                     }
                 }
             }
@@ -663,9 +708,9 @@
                 return;
             }
 
-            for (const candidate of RENDER_API_CANDIDATES) {
+            for (const candidate of getApiCandidates()) {
                 try {
-                    const response = await fetch(`${candidate}${requiredPath}`, { cache: 'no-store' });
+                    const response = await fetchWithTimeout(`${candidate}${requiredPath}`, { cache: 'no-store' });
                     if (response.ok) {
                         API_BASE_URL = candidate;
                         return;
