@@ -597,9 +597,9 @@
             (isLocalFrontend ? 'http://localhost:5000' :
                 (isHostedStaticFrontend ? RENDER_API_CANDIDATES[0] : window.location.origin));
         const BANKS_ENDPOINT = '/banks';
-        const REQUEST_TIMEOUT_MS = 25000;
+        const REQUEST_TIMEOUT_MS = 8000;
         const HEALTH_CHECK_TIMEOUT_MS = 90000;
-        const RETRY_DELAYS_MS = [0, 2500, 5000, 8000];
+        const RETRY_DELAYS_MS = [0, 1200, 2500];
         const FALLBACK_BANKS = [
             { id: 'SBI', name: 'State Bank of India' },
             { id: 'HDFC', name: 'HDFC Bank' },
@@ -787,15 +787,19 @@
         }
 
         // Initialize the application
-        document.addEventListener('DOMContentLoaded', async function() {
-            await resolveApiBaseUrl(BANKS_ENDPOINT);
-            await waitForBackendReady(BANKS_ENDPOINT);
-            loadBanks();
+        document.addEventListener('DOMContentLoaded', function() {
             setupEventListeners();
+            loadBanks();
+
+            // Resolve best backend in background without blocking initial UI.
+            resolveApiBaseUrl(BANKS_ENDPOINT).catch(() => {});
         });
 
         // Load available banks
         async function loadBanks() {
+            // Always show selectable banks immediately, then refresh from API if available.
+            populateBankSelect(FALLBACK_BANKS);
+
             try {
                 const data = await fetchJsonWithRetry('/banks');
 
@@ -804,6 +808,9 @@
                 }
 
                 populateBankSelect(data.banks);
+                const errorMessage = document.getElementById('errorMessage');
+                errorMessage.style.display = 'none';
+                errorMessage.textContent = '';
             } catch (error) {
                 console.error('Error loading banks:', error);
                 populateBankSelect(FALLBACK_BANKS);
