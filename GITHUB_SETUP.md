@@ -46,7 +46,7 @@ git push -u origin main
 ```
 
 When prompted, use:
-- **Username**: Your GitHub username (e.g., `cheredddylakshmibhavana25`)
+- **Username**: Your GitHub username (e.g., `chereddylakshmibhavana`)
 - **Password**: Your Personal Access Token (not your GitHub password)
 
 ## Step 4: Verify
@@ -59,9 +59,9 @@ Branch 'main' set up to track remote origin/main'.
 ## If It Still Fails...
 
 ### Option A: Collaborator Access
-Ask **hemalatha1311** (repo owner) to:
+Ask **ChereddyLakshmiBhavana** (repo owner) to:
 1. Go to repository → Settings → Collaborators
-2. Add your GitHub username: `cheredddylakshmibhavana25`
+2. Add your GitHub username: `chereddylakshmibhavana`
 3. You'll receive an invite - accept it
 4. Then retry the push
 

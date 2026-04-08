@@ -9,7 +9,7 @@
 
 ## Problem Explained
 
-You (`cheredddylakshmibhavana25`) are trying to push code to a repository owned by `hemalatha1311`.
+You are trying to push code to a repository owned by `ChereddyLakshmiBhavana`.
 
 **GitHub's security requires**: Only the repo owner or approved collaborators can push code.
 
@@ -19,13 +19,13 @@ You (`cheredddylakshmibhavana25`) are trying to push code to a repository owned 
 
 ### Step 1: Repository Owner Adds You as Collaborator
 
-**The owner (hemalatha1311) must do this:**
+**The owner (ChereddyLakshmiBhavana) must do this:**
 
-1. Open: https://github.com/hemalatha1311/deep-learning-loan-prediction-system-
+1. Open: https://github.com/ChereddyLakshmiBhavana/loan-approval-prediction-system--1
 2. Click **Settings** tab
 3. Click **Collaborators** in left sidebar
 4. Click **Add people**
-5. Type: `cheredddylakshmibhavana25`
+5. Type: `chereddylakshmibhavana`
 6. Click the username in dropdown
 7. Select permission: **Write** (required to push)
 8. Click **Add**
@@ -55,7 +55,7 @@ That's it! 🎉
 **First time only**, Git may ask for credentials:
 
 ```
-Username: cheredddylakshmibhavana25
+Username: chereddylakshmibhavana
 Password: [leave blank and press Enter]
 ```
 
@@ -69,7 +69,7 @@ Once pushed, all team members can:
 
 ```bash
 # Clone the repository
-git clone https://github.com/hemalatha1311/deep-learning-loan-prediction-system-.git
+git clone https://github.com/ChereddyLakshmiBhavana/loan-approval-prediction-system--1.git
 
 # Create their feature branch
 git checkout -b feature/my-feature
@@ -88,7 +88,7 @@ git push origin feature/my-feature
 
 ```
 ┌─────────────────────────────────────────────┐
-│ Main Repository (hemalatha1311's account)   │
+│ Main Repository (ChereddyLakshmiBhavana's account) │
 │  - main branch (protected/stable)           │
 │  - release branches                         │
 └─────────────────────────────────────────────┘
@@ -130,7 +130,7 @@ All files are ready! Just waiting for GitHub access.
 
 ### "Permission denied" error
 → You haven't been added as a collaborator yet  
-→ Ask hemalatha1311 to follow "Step 1" above
+→ Ask ChereddyLakshmiBhavana to follow "Step 1" above
 
 ### "Connection timed out"
 → Check your internet connection  
@@ -157,8 +157,8 @@ git push -u origin main
 All team members will be able to:
 
 ```bash
-git clone https://github.com/hemalatha1311/deep-learning-loan-prediction-system-.git
-cd deep-learning-loan-prediction-system-
+git clone https://github.com/ChereddyLakshmiBhavana/loan-approval-prediction-system--1.git
+cd loan-approval-prediction-system--1
 
 # Install dependencies
 pip install -r requirements.txt

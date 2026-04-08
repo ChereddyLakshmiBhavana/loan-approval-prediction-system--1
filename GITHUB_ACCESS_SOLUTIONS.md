@@ -8,13 +8,13 @@ This means you don't have admin/owner access to the repository settings. Here ar
 
 ## ✅ SOLUTION 1: Ask Repository Owner (Recommended)
 
-**Have hemalatha1311 do this:**
+**Have ChereddyLakshmiBhavana do this:**
 
 1. **Open the repository** in their browser
 2. **Click "Settings"** tab (top right)
 3. **Click "Collaborators"** in left sidebar
 4. **Click "Add people"** button
-5. **Type**: `cheredddylakshmibhavana25`
+5. **Type**: `chereddylakshmibhavana`
 6. **Select your username**
 7. **Choose "Write" permission**
 8. **Click "Add"**
@@ -31,7 +31,7 @@ git push -u origin main
 ### Step 1: Create New Repository on Your GitHub
 
 1. Go to: https://github.com/new
-2. **Repository name**: `deep-learning-loan-prediction-system`
+2. **Repository name**: `loan-approval-prediction-system--1`
 3. **Description**: `AI-Driven Loan Approval Prediction System`
 4. **Make it Public** (so team can access)
 5. **Don't initialize** with README (we have one)
@@ -41,7 +41,7 @@ git push -u origin main
 
 ```bash
 # Change remote to your repository
-git remote set-url origin https://github.com/cheredddylakshmibhavana25/deep-learning-loan-prediction-system.git
+git remote set-url origin https://github.com/ChereddyLakshmiBhavana/loan-approval-prediction-system--1.git
 
 # Push all code
 git push -u origin main
@@ -51,7 +51,7 @@ git push -u origin main
 
 Tell your team to clone from your repository:
 ```bash
-git clone https://github.com/cheredddylakshmibhavana25/deep-learning-loan-prediction-system.git
+git clone https://github.com/ChereddyLakshmiBhavana/loan-approval-prediction-system--1.git
 ```
 
 ---
@@ -60,7 +60,7 @@ git clone https://github.com/cheredddylakshmibhavana25/deep-learning-loan-predic
 
 ### Step 1: Fork the Original Repository
 
-1. Go to: https://github.com/hemalatha1311/deep-learning-loan-prediction-system-
+1. Go to: https://github.com/ChereddyLakshmiBhavana/loan-approval-prediction-system--1
 2. Click **"Fork"** button (top right)
 3. This creates a copy in your account
 
@@ -68,7 +68,7 @@ git clone https://github.com/cheredddylakshmibhavana25/deep-learning-loan-predic
 
 ```bash
 # Change remote to your fork
-git remote set-url origin https://github.com/cheredddylakshmibhavana25/deep-learning-loan-prediction-system-.git
+git remote set-url origin https://github.com/ChereddyLakshmiBhavana/loan-approval-prediction-system--1.git
 
 # Push code
 git push -u origin main
@@ -122,7 +122,7 @@ If it says "Everything up-to-date", you're good to push!
 
 **Choose one solution and let me know which you want to try:**
 
-1. **Solution 1**: Ask hemalatha1311 to add you as collaborator
+1. **Solution 1**: Ask ChereddyLakshmiBhavana to add you as collaborator
 2. **Solution 2**: Create your own repository
 3. **Solution 3**: Fork and create pull request
 

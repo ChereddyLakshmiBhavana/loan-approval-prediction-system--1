@@ -207,6 +207,22 @@
             color: #6b7280;
         }
 
+        .loan-loading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .inline-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #e5e7eb;
+            border-top-color: #4f46e5;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+
         .result-section {
             display: none;
             padding: 40px;
@@ -388,6 +404,10 @@
         <!-- Loan Selection Step -->
         <div id="loanStep" class="form-section" style="display: none;">
             <h2>Step 2: Select Loan Product</h2>
+            <div id="loanLoading" class="muted loan-loading" style="display: none; margin: 8px 0 14px; font-weight: 600;">
+                <span class="inline-spinner" aria-hidden="true"></span>
+                <span id="loanLoadingText">Loading loan products...</span>
+            </div>
             <div id="loanOptions" class="loan-grid">
                 <!-- Loan options will be populated here -->
             </div>
@@ -586,16 +606,22 @@
         // 4) Otherwise, same-origin fallback
         const apiBaseParam = new URLSearchParams(window.location.search).get('apiBase');
         const RENDER_API_CANDIDATES = [
-            'https://loan-approval-prediction-system-1-wt4y.onrender.com',
-            'https://loan-approval-backend.onrender.com'
+            'https://loan-approval-prediction-system-1-wt4y.onrender.com'
         ];
-        const isLocalFrontend = window.location.origin.includes(':3000');
-        const isHostedStaticFrontend =
-            window.location.hostname.endsWith('netlify.app') ||
-            window.location.hostname.endsWith('vercel.app');
+        const currentHost = window.location.hostname;
+        const currentOrigin = window.location.origin;
+        const isLocalFrontend = currentOrigin.includes(':3000');
+        const isLoopbackHost = currentHost === 'localhost' || currentHost === '127.0.0.1';
+        const isKnownBackendHost = RENDER_API_CANDIDATES.some(url => {
+            try {
+                return new URL(url).hostname === currentHost;
+            } catch (error) {
+                return false;
+            }
+        });
         let API_BASE_URL = apiBaseParam ||
             (isLocalFrontend ? 'http://localhost:5000' :
-                (isHostedStaticFrontend ? RENDER_API_CANDIDATES[0] : window.location.origin));
+                ((isLoopbackHost || isKnownBackendHost) ? currentOrigin : RENDER_API_CANDIDATES[0]));
         const BANKS_ENDPOINT = '/banks';
         const REQUEST_TIMEOUT_MS = 8000;
         const HEALTH_CHECK_TIMEOUT_MS = 90000;
@@ -653,6 +679,14 @@
                 }
             ]
         };
+        const BANK_ID_BY_NAME = {
+            'state bank of india': 'SBI',
+            'sbi': 'SBI',
+            'hdfc bank': 'HDFC',
+            'hdfc': 'HDFC',
+            'icici bank': 'ICICI',
+            'icici': 'ICICI'
+        };
 
         function sleep(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
@@ -667,7 +701,7 @@
                 return [apiBaseParam];
             }
 
-            if (isLocalFrontend || !isHostedStaticFrontend) {
+            if (isLocalFrontend || isKnownBackendHost) {
                 return [API_BASE_URL];
             }
 
@@ -679,11 +713,74 @@
             return [...new Set(orderedCandidates)];
         }
 
+        function inferBankId(rawBank) {
+            const directId = rawBank.id || rawBank.bank_id || rawBank.code || rawBank.bankCode;
+            if (directId) {
+                return String(directId).trim();
+            }
+
+            const bankName = String(rawBank.name || rawBank.bank_name || '').trim();
+            if (!bankName) {
+                return '';
+            }
+
+            const knownId = BANK_ID_BY_NAME[bankName.toLowerCase()];
+            return knownId || bankName.toUpperCase().replace(/\s+/g, '_');
+        }
+
+        function normalizeBanks(rawBanks) {
+            if (!Array.isArray(rawBanks)) {
+                return [];
+            }
+
+            return rawBanks
+                .map(bank => {
+                    const id = inferBankId(bank);
+                    const name = String(bank.name || bank.bank_name || bank.label || id || '').trim();
+                    return { id, name };
+                })
+                .filter(bank => bank.id && bank.name);
+        }
+
+        function normalizeLoans(rawLoans) {
+            if (!Array.isArray(rawLoans)) {
+                return [];
+            }
+
+            return rawLoans
+                .map((loan, index) => {
+                    const id = String(loan.id || loan.loan_id || loan.code || `loan_${index + 1}`).trim();
+                    const name = String(loan.name || loan.loan_name || 'Loan Product').trim();
+                    const amountRange =
+                        loan.amount_range ||
+                        loan.amountRange ||
+                        ((loan.min_amount != null && loan.max_amount != null)
+                            ? `₹${Number(loan.min_amount).toLocaleString()} - ₹${Number(loan.max_amount).toLocaleString()}`
+                            : 'As per bank policy');
+                    const termRange =
+                        loan.term_range ||
+                        loan.termRange ||
+                        ((loan.min_term_months != null && loan.max_term_months != null)
+                            ? `${loan.min_term_months} - ${loan.max_term_months} months`
+                            : 'Flexible');
+
+                    return {
+                        id,
+                        name,
+                        amount_range: amountRange,
+                        term_range: termRange,
+                        interest_rate: loan.interest_rate || loan.interest_rate_range || 'NA',
+                        processing_fee: loan.processing_fee || 'As applicable'
+                    };
+                })
+                .filter(loan => loan.id);
+        }
+
         function populateBankSelect(banks) {
             const bankSelect = document.getElementById('bankSelect');
             bankSelect.innerHTML = '<option value="">Choose your bank...</option>';
 
-            banks.forEach(bank => {
+            normalizeBanks(banks).forEach(bank => {
                 const option = document.createElement('option');
                 option.value = bank.id;
                 option.textContent = bank.name;
@@ -835,10 +932,21 @@
             document.getElementById('loanForm').addEventListener('submit', handleFormSubmission);
         }
 
+        function setLoanLoading(isLoading, message = 'Loading loan products...') {
+            const loadingNode = document.getElementById('loanLoading');
+            const loadingTextNode = document.getElementById('loanLoadingText');
+            loadingTextNode.textContent = message;
+            loadingNode.style.display = isLoading ? 'block' : 'none';
+        }
+
         // Handle bank selection
         function handleBankSelection(event) {
             selectedBank = event.target.value;
+            selectedLoan = null;
             document.getElementById('nextToLoanBtn').disabled = !selectedBank;
+            document.getElementById('nextToFormBtn').disabled = true;
+            document.getElementById('loanOptions').innerHTML = '';
+            setLoanLoading(false);
 
             if (selectedBank) {
                 loadBankLoans(selectedBank);
@@ -847,19 +955,22 @@
 
         // Load loans for selected bank
         async function loadBankLoans(bankId) {
-            try {
-                const data = await fetchJsonWithRetry(`/banks/${bankId}/loans`);
+            setLoanLoading(true);
 
-                if (!data || !Array.isArray(data.loans) || data.loans.length === 0) {
+            try {
+                const data = await fetchJsonWithRetry(`/banks/${encodeURIComponent(bankId)}/loans`);
+                const normalizedLoans = normalizeLoans(data?.loans || data?.loan_products || []);
+
+                if (!data || normalizedLoans.length === 0) {
                     throw new Error('Loan list was empty');
                 }
 
-                bankLoans = data.loans;
-                displayLoanOptions(data.loans);
+                bankLoans = normalizedLoans;
+                displayLoanOptions(normalizedLoans);
             } catch (error) {
                 console.error('Error loading loans:', error);
 
-                const fallbackLoans = FALLBACK_LOANS_BY_BANK[bankId] || [];
+                const fallbackLoans = normalizeLoans(FALLBACK_LOANS_BY_BANK[bankId] || []);
                 if (fallbackLoans.length > 0) {
                     bankLoans = fallbackLoans;
                     displayLoanOptions(fallbackLoans);
@@ -868,6 +979,8 @@
                 }
 
                 showError('Failed to load loan options.');
+            } finally {
+                setLoanLoading(false);
             }
         }
 
@@ -875,12 +988,19 @@
         function displayLoanOptions(loans) {
             const loanOptions = document.getElementById('loanOptions');
             loanOptions.innerHTML = '';
+            selectedLoan = null;
+            document.getElementById('nextToFormBtn').disabled = true;
+
+            if (!Array.isArray(loans) || loans.length === 0) {
+                loanOptions.innerHTML = '<div class="muted">No loan products available for this bank right now.</div>';
+                return;
+            }
 
             loans.forEach(loan => {
                 const loanCard = document.createElement('div');
                 loanCard.className = 'loan-card';
-                loanCard.dataset.loanId = loan.id;
-                loanCard.onclick = () => selectLoan(loan.id);
+                loanCard.dataset.loanId = String(loan.id);
+                loanCard.addEventListener('click', () => selectLoan(String(loan.id)));
 
                 loanCard.innerHTML = `
                     <h3>${loan.name}</h3>
@@ -903,7 +1023,11 @@
                 card.classList.remove('selected');
             });
 
-            document.querySelector(`[data-loan-id="${loanId}"]`).classList.add('selected');
+            const selectedCard = Array.from(document.querySelectorAll('.loan-card'))
+                .find(card => card.dataset.loanId === String(loanId));
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+            }
             document.getElementById('nextToFormBtn').disabled = false;
         }
 

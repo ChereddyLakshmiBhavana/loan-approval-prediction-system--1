@@ -30,13 +30,13 @@
 
 ### Step 1: Repository Owner Action (🔴 BLOCKING)
 
-**Have hemalatha1311 do this:**
+**Have ChereddyLakshmiBhavana do this:**
 
 ```
-1. Go to: https://github.com/hemalatha1311/deep-learning-loan-prediction-system-
+1. Go to: https://github.com/ChereddyLakshmiBhavana/loan-approval-prediction-system--1
 2. Click "Settings" → "Collaborators"
 3. Click "Add people"
-4. Type: cheredddylakshmibhavana25
+4. Type: chereddylakshmibhavana
 5. Grant "Write" permission
 6. Send invitation
 ```
@@ -67,8 +67,8 @@ Everything up-to-date
 ## 📊 Current Repository Status
 
 ```
-Repository: deep-learning-loan-prediction-system-
-Owner: hemalatha1311
+Repository: loan-approval-prediction-system--1
+Owner: ChereddyLakshmiBhavana
 Branch: main
 
 Local Commits (unpushed): 2
@@ -99,8 +99,8 @@ Share this with team members:
 
 ```bash
 # Clone the repository
-git clone https://github.com/hemalatha1311/deep-learning-loan-prediction-system-.git
-cd deep-learning-loan-prediction-system-
+git clone https://github.com/ChereddyLakshmiBhavana/loan-approval-prediction-system--1.git
+cd loan-approval-prediction-system--1
 
 # Set up development environment
 python setup_dev_environment.py
@@ -162,7 +162,7 @@ Team Members
 |------|----------|--------|
 | Project Code | All files | ✅ Ready |
 | Git Repo | Local | ✅ Ready |
-| GitHub Remote | hemalatha1311's account | ⏳ Pending Access |
+| GitHub Remote | ChereddyLakshmiBhavana's account | ⏳ Pending Access |
 | Team Docs | `/docs/` | ✅ Complete |
 | Development Setup | `setup_dev_environment.py` | ✅ Ready |
 | Unit Tests | `/tests/` | ✅ Ready |
@@ -194,13 +194,13 @@ A: Same process - repo owner adds each person as a collaborator.
 
 ## ✉️ Send to Repository Owner
 
-**hemalatha1311,**
+**ChereddyLakshmiBhavana,**
 
-To enable your team to push code, please add **cheredddylakshmibhavana25** as a collaborator:
+To enable your team to push code, please add **chereddylakshmibhavana** as a collaborator:
 
 1. Open your repo settings
 2. Go to Collaborators
-3. Add: `cheredddylakshmibhavana25`
+3. Add: `chereddylakshmibhavana`
 4. Grant: Write access
 5. Send invitation
 
