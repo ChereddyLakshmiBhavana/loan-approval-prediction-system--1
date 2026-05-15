@@ -1,4 +1,4 @@
-# 🎯 AI-Driven Loan Approval Prediction System
+#  AI-Driven Loan Approval Prediction System
 
 A complete deep learning-based system for predicting loan approval status with both backend API and modern web interface.
 
